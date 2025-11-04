@@ -92,38 +92,40 @@ function enableButtons() {
     actionButtons.forEach(btn => btn.disabled = false);
 }
 
-// Mock HTTP request to backend
+// Send request to backend
 async function sendToBackend(text, action) {
-    const mockBackendUrl = 'https://api.example.com/llm'; // Replace with your actual backend URL
+    const backendUrl = 'http://localhost:5000/run';
 
-    console.log('Preparing mock HTTP request to backend...');
+    console.log('Sending request to backend...');
     console.log('Action:', action);
     console.log('Text:', text);
 
     try {
-        // Mock request body
+        // Request body with task and text fields
         const requestBody = {
-            action: action,
-            text: text,
-            timestamp: new Date().toISOString()
+            task: action,
+            text: text
         };
 
         console.log('Request body:', requestBody);
 
-        // Simulate network delay (2-4 seconds)
-        const delay = 2000 + Math.random() * 2000;
-        await new Promise(resolve => setTimeout(resolve, delay));
+        const response = await fetch(backendUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
 
-        // Mock response from LLM
-        const mockResponses = {
-            summarize: `Here's a summary of your text:\n\n"${text}"\n\nThis is a mock AI-generated summary. In production, this would be the actual response from your LLM backend.`,
-            translate: `Translation (Spanish):\n\n"${text}"\n\nEste es un resultado simulado. En producción, esto sería la traducción real de tu backend LLM.`,
-            chat: `Chat Response:\n\nYou asked about: "${text}"\n\nThis is a mock conversational response. Your actual LLM would provide a meaningful answer here.`
-        };
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
 
         return {
             success: true,
-            data: mockResponses[action] || `Processed: ${text}`
+            data: data
         };
 
     } catch (error) {
@@ -158,11 +160,15 @@ async function handleTranslate() {
     }
 }
 
-function handleSearch() {
-    // Search doesn't need backend call, opens directly
-    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(currentSelectedText)}`;
-    chrome.tabs.create({ url: searchUrl });
-    showResult('Web Search', 'Opening Google search for:\n\n"' + currentSelectedText + '"');
+async function handleSearch() {
+    showLoading();
+    const response = await sendToBackend(currentSelectedText, 'websearch');
+
+    if (response.success) {
+        showResult('Web Search', response.data);
+    } else {
+        showResult('Error', `Failed to perform web search: ${response.error}`);
+    }
 }
 
 async function handleChat() {
