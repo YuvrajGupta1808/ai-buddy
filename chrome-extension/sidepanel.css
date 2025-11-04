@@ -20,7 +20,7 @@ body {
 }
 
 header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #27F5B7 0%, #1dd9a0 100%);
   color: white;
   padding: 24px 20px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -164,7 +164,7 @@ header h1 {
   width: 48px;
   height: 48px;
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #667eea;
+  border-top: 4px solid #27F5B7;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -248,11 +248,11 @@ header h1 {
 }
 
 .chat-message.user .chat-message-header {
-  color: #667eea;
+  color: #27F5B7;
 }
 
 .chat-message.assistant .chat-message-header {
-  color: #764ba2;
+  color: #1dd9a0;
 }
 
 .chat-message-content {
@@ -316,7 +316,7 @@ header h1 {
 
 .chat-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #27F5B7;
 }
 
 .chat-input::placeholder {
@@ -325,7 +325,7 @@ header h1 {
 
 .send-btn {
   padding: 12px 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #27F5B7 0%, #1dd9a0 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -340,7 +340,7 @@ header h1 {
 
 .send-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 8px rgba(39, 245, 183, 0.3);
 }
 
 .send-btn:active {
