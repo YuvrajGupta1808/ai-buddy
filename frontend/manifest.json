@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "My Chrome Extension",
+  "name": "AI Buddy",
   "version": "1.0.0",
-  "description": "A blank Chrome extension template",
+  "description": "Your AI Assistant for summarizing, translating, web searching, and chatting",
   "action": {
     "default_title": "Open side panel"
   },
@@ -20,8 +20,12 @@
   ],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ]
