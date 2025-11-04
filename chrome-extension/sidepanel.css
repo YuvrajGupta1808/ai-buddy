@@ -191,6 +191,34 @@ header h1 {
   transform: none;
 }
 
+/* Chat Header */
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.clear-chat-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.clear-chat-btn:hover {
+  background: #ffe0e0;
+  transform: scale(1.1);
+}
+
+.clear-chat-btn:active {
+  transform: scale(0.95);
+}
+
 /* Chat Messages */
 .chat-messages {
   display: flex;

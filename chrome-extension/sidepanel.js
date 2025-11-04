@@ -15,6 +15,7 @@ const chatMessages = document.getElementById('chatMessages');
 const chatInputContainer = document.getElementById('chatInputContainer');
 const chatInput = document.getElementById('chatInput');
 const sendChatBtn = document.getElementById('sendChatBtn');
+const clearChatBtn = document.getElementById('clearChatBtn');
 
 const summarizeBtn = document.getElementById('summarizeBtn');
 const translateBtn = document.getElementById('translateBtn');
@@ -22,6 +23,8 @@ const searchBtn = document.getElementById('searchBtn');
 const chatBtn = document.getElementById('chatBtn');
 
 const actionButtons = [summarizeBtn, translateBtn, searchBtn, chatBtn];
+
+console.log('hi')
 
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -94,7 +97,7 @@ function enableButtons() {
 
 // Send request to backend
 async function sendToBackend(text, action) {
-    const backendUrl = 'http://localhost:5000/run';
+    const backendUrl = 'https://untangental-odilia-nonresponsively.ngrok-free.dev/run';
 
     console.log('Sending request to backend...');
     console.log('Action:', action);
@@ -117,6 +120,8 @@ async function sendToBackend(text, action) {
             body: JSON.stringify(requestBody)
         });
 
+        console.log(response)
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -129,7 +134,7 @@ async function sendToBackend(text, action) {
         };
 
     } catch (error) {
-        console.error('Error sending to backend:', error);
+        console.error('Error sending to backend:', error); s
         return {
             success: false,
             error: error.message
@@ -293,6 +298,17 @@ function autoResizeTextarea() {
     chatInput.style.height = newHeight + 'px';
 }
 
+function clearChat() {
+    // Clear the chat history array
+    chatHistory = [];
+
+    // Clear the chat messages from the DOM
+    chatMessages.innerHTML = '';
+
+    // Optionally, you can show a brief confirmation or just clear silently
+    console.log('Chat history cleared');
+}
+
 // Button handlers
 summarizeBtn.addEventListener('click', handleSummarize);
 translateBtn.addEventListener('click', handleTranslate);
@@ -301,6 +317,7 @@ chatBtn.addEventListener('click', handleChat);
 
 // Chat input handlers
 sendChatBtn.addEventListener('click', sendMessage);
+clearChatBtn.addEventListener('click', clearChat);
 
 chatInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {

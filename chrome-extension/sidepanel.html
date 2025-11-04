@@ -51,7 +51,10 @@
       </div>
       
       <div id="chatSection" class="section hidden">
-        <h2>Chat Conversation</h2>
+        <div class="chat-header">
+          <h2>Chat Conversation</h2>
+          <button id="clearChatBtn" class="clear-chat-btn" title="Clear chat history">🗑️</button>
+        </div>
         <div id="chatMessages" class="chat-messages"></div>
       </div>
       
@@ -77,7 +80,7 @@
     </div>
   </div>
   
-  <script src="sidepanel.js"></script>
+  <script type="module" src="sidepanel.js"></script>
 </body>
 </html>
 
