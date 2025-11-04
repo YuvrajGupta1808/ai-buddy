@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Side Panel</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>My Extension</h1>
+      <p class="subtitle">Side Panel</p>
+    </header>
+    
+    <div class="content">
+      <div id="selectedTextSection" class="section hidden">
+        <h2>Selected Text</h2>
+        <div id="selectedText" class="text-display"></div>
+        
+        <div class="actions">
+          <button id="summarizeBtn" class="action-btn">
+            <span class="icon">📝</span>
+            <span>Summarize</span>
+          </button>
+          <button id="translateBtn" class="action-btn">
+            <span class="icon">🌐</span>
+            <span>Translate</span>
+          </button>
+          <button id="searchBtn" class="action-btn">
+            <span class="icon">🔍</span>
+            <span>Web Search</span>
+          </button>
+          <button id="chatBtn" class="action-btn">
+            <span class="icon">💬</span>
+            <span>Open Chat</span>
+          </button>
+        </div>
+      </div>
+      
+      <div id="loadingSection" class="section hidden">
+        <div class="loading-container">
+          <div class="spinner"></div>
+          <p class="loading-text">Waiting for LLM response...</p>
+        </div>
+      </div>
+      
+      <div id="resultSection" class="section hidden">
+        <h2>Result</h2>
+        <div id="result" class="result-display"></div>
+      </div>
+      
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">✨</div>
+        <h3>Select text on the page</h3>
+        <p>Highlight any text to see options here</p>
+      </div>
+    </div>
+  </div>
+  <script src="sidepanel.js"></script>
+</body>
+</html>
+
