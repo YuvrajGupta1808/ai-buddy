@@ -128,13 +128,15 @@ async function sendToBackend(text, action) {
 
         const data = await response.json();
 
+        console.log('data', data)
+
         return {
             success: true,
             data: data
         };
 
     } catch (error) {
-        console.error('Error sending to backend:', error); s
+        console.error('Error sending to backend:', error);
         return {
             success: false,
             error: error.message
@@ -148,7 +150,9 @@ async function handleSummarize() {
     const response = await sendToBackend(currentSelectedText, 'summarize');
 
     if (response.success) {
-        showResult('Summary', response.data);
+        const tool = response.data.task || 'summarize';
+        const result = response.data.result || response.data;
+        showResult(`Tool: ${tool}`, result);
     } else {
         showResult('Error', `Failed to get summary: ${response.error}`);
     }
@@ -159,7 +163,9 @@ async function handleTranslate() {
     const response = await sendToBackend(currentSelectedText, 'translate');
 
     if (response.success) {
-        showResult('Translation', response.data);
+        const tool = response.data.task || 'translate';
+        const result = response.data.result || response.data;
+        showResult(`Tool: ${tool}`, result);
     } else {
         showResult('Error', `Failed to get translation: ${response.error}`);
     }
@@ -170,7 +176,9 @@ async function handleSearch() {
     const response = await sendToBackend(currentSelectedText, 'websearch');
 
     if (response.success) {
-        showResult('Web Search', response.data);
+        const tool = response.data.task || 'websearch';
+        const result = response.data.result || response.data;
+        showResult(`Tool: ${tool}`, result);
     } else {
         showResult('Error', `Failed to perform web search: ${response.error}`);
     }
@@ -263,7 +271,13 @@ async function getChatResponse(userMessage) {
     chatInput.focus();
 
     if (response.success) {
-        addChatMessage('assistant', response.data);
+        // Extract tool and result from response
+        const tool = response.data.task || 'chat';
+        const result = response.data.result || response.data;
+
+        // Format message with tool used and result
+        const formattedMessage = `Tool: ${tool}\n\n${result}`;
+        addChatMessage('assistant', formattedMessage);
     } else {
         addChatMessage('assistant', `Error: ${response.error}`);
     }
