@@ -19,7 +19,8 @@ class RunRequest(BaseModel):
 
 class RunResponse(BaseModel):
     """Response model for /run endpoint."""
-    result: str
+    message: str = Field(..., description="Status message about changes made")
+    result: str = Field(..., description="The actual result/text returned")
     task: str
 
 
@@ -49,8 +50,12 @@ async def run(request: RunRequest):
         )
     
     try:
-        result = run_task(request.task, request.text)
-        return RunResponse(result=result, task=request.task)
+        task_result = run_task(request.task, request.text)
+        return RunResponse(
+            message=task_result.get("message", "Task completed"),
+            result=task_result.get("result", ""),
+            task=request.task
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
