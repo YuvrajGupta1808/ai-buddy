@@ -39,37 +39,46 @@ class WebSearchToolInput(BaseModel):
 
 
 class WebSearchTool(BaseTool):
-    """Tool for performing web searches using Serper API."""
+    """Tool for performing web searches using SerpAPI."""
     name: str = "web_search"
     description: str = "Performs a web search and returns top 3 results. Use this when the task is 'websearch'."
     args_schema: type[BaseModel] = WebSearchToolInput
-    serper_api_key: Optional[str] = None
+    serpapi_api_key: Optional[str] = None
 
     def __init__(self):
         super().__init__()
-        self.serper_api_key = os.getenv("SERPER_API_KEY")
-        if not self.serper_api_key:
+        self.serpapi_api_key = os.getenv("SERPER_API_KEY")
+        if not self.serpapi_api_key:
             raise ValueError("SERPER_API_KEY environment variable is required")
 
     def _run(self, query: str) -> str:
         """Perform web search and return top 3 results."""
         try:
-            url = "https://google.serper.dev/search"
-            headers = {
-                "X-API-KEY": self.serper_api_key,
-                "Content-Type": "application/json"
-            }
-            payload = {
+            # Re-check API key in case it wasn't loaded at init time
+            if not self.serpapi_api_key:
+                self.serpapi_api_key = os.getenv("SERPER_API_KEY")
+                if not self.serpapi_api_key:
+                    return "Error: SERPER_API_KEY environment variable is not set"
+            
+            # SerpAPI uses GET request with query parameters
+            url = "https://serpapi.com/search"
+            params = {
                 "q": query,
-                "num": 3
+                "api_key": self.serpapi_api_key,
+                "num": 3,
+                "engine": "google"
             }
             
-            response = requests.post(url, headers=headers, json=payload)
+            response = requests.get(url, params=params, timeout=10)
+            
+            if response.status_code == 403:
+                return f"Error: SerpAPI authentication failed. Please check your SERPER_API_KEY. Status: {response.status_code}"
+            
             response.raise_for_status()
             data = response.json()
             
-            # Serper returns results in 'organic' field
-            organic_results = data.get('organic', [])
+            # SerpAPI returns results in 'organic_results' field
+            organic_results = data.get('organic_results', [])
             if not organic_results:
                 return "No search results found."
             
@@ -81,6 +90,8 @@ class WebSearchTool(BaseTool):
                 formatted_results.append(f"{i}. {title}\n   {snippet}\n   {link}")
             
             return "\n\n".join(formatted_results)
+        except requests.exceptions.HTTPError as e:
+            return f"Error performing web search: HTTP {e.response.status_code} - {e.response.text[:200]}"
         except Exception as e:
             return f"Error performing web search: {str(e)}"
 
