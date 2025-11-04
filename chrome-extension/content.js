@@ -46,6 +46,11 @@ function createPopup() {
             font-family: inherit;
             width: 100%;
             transition: background 0.2s;
+            outline: none;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
         `;
         button.innerHTML = `<span>${btn.icon}</span><span>${btn.text}</span>`;
 
@@ -56,7 +61,17 @@ function createPopup() {
             button.style.background = '#f5f5f5';
         };
 
+        button.onmousedown = (e) => {
+            e.preventDefault();
+            button.style.background = '#d0d0d0';
+        };
+
+        button.onmouseup = () => {
+            button.style.background = '#e0e0e0';
+        };
+
         button.onclick = (e) => {
+            e.preventDefault();
             e.stopPropagation();
             handleAction(btn.action, currentSelectedText);
         };

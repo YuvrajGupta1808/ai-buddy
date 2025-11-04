@@ -1,5 +1,7 @@
 // Side panel script
 let currentSelectedText = '';
+let chatHistory = [];
+let isChatMode = false;
 
 // Get references to DOM elements
 const selectedTextSection = document.getElementById('selectedTextSection');
@@ -8,6 +10,11 @@ const loadingSection = document.getElementById('loadingSection');
 const resultSection = document.getElementById('resultSection');
 const resultDisplay = document.getElementById('result');
 const emptyState = document.getElementById('emptyState');
+const chatSection = document.getElementById('chatSection');
+const chatMessages = document.getElementById('chatMessages');
+const chatInputContainer = document.getElementById('chatInputContainer');
+const chatInput = document.getElementById('chatInput');
+const sendChatBtn = document.getElementById('sendChatBtn');
 
 const summarizeBtn = document.getElementById('summarizeBtn');
 const translateBtn = document.getElementById('translateBtn');
@@ -52,7 +59,14 @@ function showSelectedText(text) {
     emptyState.classList.add('hidden');
     selectedTextSection.classList.remove('hidden');
     selectedTextDisplay.textContent = text;
-    resultSection.classList.add('hidden');
+
+    // Only hide chat if not in chat mode
+    if (!isChatMode) {
+        resultSection.classList.add('hidden');
+        chatSection.classList.add('hidden');
+        chatInputContainer.classList.add('hidden');
+    }
+
     loadingSection.classList.add('hidden');
     enableButtons();
 }
@@ -152,14 +166,125 @@ function handleSearch() {
 }
 
 async function handleChat() {
-    showLoading();
-    const response = await sendToBackend(currentSelectedText, 'chat');
+    // Enter chat mode
+    isChatMode = true;
+    showChatMode();
+
+    // Add initial message with selected text
+    if (currentSelectedText) {
+        addChatMessage('user', currentSelectedText);
+
+        // Get AI response
+        await getChatResponse(currentSelectedText);
+    }
+}
+
+function showChatMode() {
+    // Hide other sections
+    resultSection.classList.add('hidden');
+    loadingSection.classList.add('hidden');
+    emptyState.classList.add('hidden');
+
+    // Show chat section and input
+    chatSection.classList.remove('hidden');
+    chatInputContainer.classList.remove('hidden');
+
+    // Focus on input
+    chatInput.focus();
+}
+
+function addChatMessage(role, content) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${role}`;
+
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'chat-message-header';
+    headerDiv.textContent = role === 'user' ? 'You' : 'AI Assistant';
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'chat-message-content';
+    contentDiv.textContent = content;
+
+    messageDiv.appendChild(headerDiv);
+    messageDiv.appendChild(contentDiv);
+    chatMessages.appendChild(messageDiv);
+
+    // Store in history
+    chatHistory.push({ role, content });
+
+    // Scroll to bottom
+    setTimeout(() => {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }, 100);
+}
+
+async function getChatResponse(userMessage) {
+    // Show loading indicator in chat
+    const loadingMsgDiv = document.createElement('div');
+    loadingMsgDiv.className = 'chat-message assistant';
+    loadingMsgDiv.innerHTML = `
+        <div class="chat-message-header">AI Assistant</div>
+        <div class="chat-message-content">
+            <div class="loading-container" style="padding: 10px 0;">
+                <div class="spinner" style="width: 24px; height: 24px; border-width: 3px;"></div>
+            </div>
+        </div>
+    `;
+    loadingMsgDiv.id = 'loading-message';
+    chatMessages.appendChild(loadingMsgDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    // Disable send button while loading
+    sendChatBtn.disabled = true;
+    chatInput.disabled = true;
+
+    const response = await sendToBackend(userMessage, 'chat');
+
+    // Remove loading indicator
+    const loadingMsg = document.getElementById('loading-message');
+    if (loadingMsg) {
+        loadingMsg.remove();
+    }
+
+    // Enable send button
+    sendChatBtn.disabled = false;
+    chatInput.disabled = false;
+    chatInput.focus();
 
     if (response.success) {
-        showResult('Chat', response.data);
+        addChatMessage('assistant', response.data);
     } else {
-        showResult('Error', `Failed to get chat response: ${response.error}`);
+        addChatMessage('assistant', `Error: ${response.error}`);
     }
+}
+
+function sendMessage() {
+    const message = chatInput.value.trim();
+
+    if (!message) {
+        return;
+    }
+
+    // Add user message to chat
+    addChatMessage('user', message);
+
+    // Clear input
+    chatInput.value = '';
+    resetTextareaHeight();
+
+    // Get AI response
+    getChatResponse(message);
+}
+
+function resetTextareaHeight() {
+    chatInput.style.height = 'auto';
+    chatInput.rows = 1;
+}
+
+function autoResizeTextarea() {
+    chatInput.style.height = 'auto';
+    const newHeight = Math.min(chatInput.scrollHeight, 120);
+    chatInput.style.height = newHeight + 'px';
 }
 
 // Button handlers
@@ -167,6 +292,18 @@ summarizeBtn.addEventListener('click', handleSummarize);
 translateBtn.addEventListener('click', handleTranslate);
 searchBtn.addEventListener('click', handleSearch);
 chatBtn.addEventListener('click', handleChat);
+
+// Chat input handlers
+sendChatBtn.addEventListener('click', sendMessage);
+
+chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+chatInput.addEventListener('input', autoResizeTextarea);
 
 console.log('Side panel loaded');
 
