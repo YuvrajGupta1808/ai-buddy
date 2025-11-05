@@ -8,12 +8,18 @@ from agent import run_task
 # Load environment variables
 load_dotenv()
 
+# Initialize Opik for logging
+try:
+    import opik
+except ImportError:
+    opik = None
+
 app = FastAPI(title="AI Buddy Backend", version="1.0.0")
 
 
 class RunRequest(BaseModel):
     """Request model for /run endpoint."""
-    task: str = Field(..., description="Task type: summarize, websearch, or translate")
+    task: str = Field(..., description="Task type: summarize, websearch (or 'search' as alias), or translate")
     text: str = Field(..., description="Text input for the task")
 
 
@@ -30,6 +36,34 @@ async def root():
     return {"message": "AI Buddy Backend Service", "status": "running"}
 
 
+def _run_task_internal(request: RunRequest) -> RunResponse:
+    """Internal function to execute the task."""
+    # Validate task and map "search" to "websearch"
+    valid_tasks = ["summarize", "websearch", "translate"]
+    # Map "search" to "websearch" for compatibility
+    task = request.task
+    if task == "search":
+        task = "websearch"
+    
+    if task not in valid_tasks:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid task '{request.task}'. Must be one of {valid_tasks} or 'search' (alias for 'websearch')"
+        )
+    
+    try:
+        task_result = run_task(task, request.text)
+        return RunResponse(
+            message=task_result.get("message", "Task completed"),
+            result=task_result.get("result", ""),
+            task=task  # Return the normalized task name (websearch instead of search)
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
 @app.post("/run", response_model=RunResponse)
 async def run(request: RunRequest):
     """
@@ -41,25 +75,7 @@ async def run(request: RunRequest):
     Returns:
         Response with the task result
     """
-    # Validate task
-    valid_tasks = ["summarize", "websearch", "translate"]
-    if request.task not in valid_tasks:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid task '{request.task}'. Must be one of {valid_tasks}"
-        )
-    
-    try:
-        task_result = run_task(request.task, request.text)
-        return RunResponse(
-            message=task_result.get("message", "Task completed"),
-            result=task_result.get("result", ""),
-            task=request.task
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+    return _run_task_internal(request)
 
 
 if __name__ == "__main__":

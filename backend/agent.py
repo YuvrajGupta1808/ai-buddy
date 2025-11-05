@@ -6,6 +6,23 @@ from typing import Dict
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import AgentExecutor, initialize_agent, AgentType
 from tools import SummarizeTool, WebSearchTool, TranslateTool
+from dotenv import load_dotenv
+from memory import memory_store
+
+# Load environment variables
+load_dotenv()
+
+# Initialize Opik for logging
+# Opik will automatically read configuration from ~/.opik.config
+# Run 'opik configure' to set up your API key and workspace
+try:
+    import opik
+    # Opik will automatically use the config file created by 'opik configure'
+    print("✅ Opik logging enabled (using config from 'opik configure')")
+except ImportError:
+    print("⚠️  Opik not installed. Install with: pip install opik")
+    print("   Then run: opik configure")
+    opik = None
 
 
 def create_agent_executor() -> AgentExecutor:
@@ -53,6 +70,12 @@ def run_task(task: str, text: str) -> Dict[str, str]:
     Returns:
         Dictionary with "message" and "result" keys
     """
+    # Pass task and text as separate parameters for flat Opik capture
+    return _execute_task(task, text)
+
+
+def _execute_task_internal(task: str, text: str) -> Dict[str, str]:
+    """Internal function to execute the task (separated for tracking)."""
     executor = create_agent_executor()
     
     # Map task to a prompt that guides the agent to use the right tool
@@ -66,6 +89,8 @@ def run_task(task: str, text: str) -> Dict[str, str]:
         raise ValueError(f"Invalid task: {task}. Must be one of {list(task_prompts.keys())}")
     
     prompt = task_prompts[task]
+    
+    # Execute agent
     agent_result = executor.invoke({"input": prompt})
     
     # Extract the output from the agent
@@ -101,7 +126,7 @@ def run_task(task: str, text: str) -> Dict[str, str]:
     
     # Generate a contextual message based on the task and result
     message_prompt = f"""Based on the following task and result, generate a brief, descriptive message (1-2 sentences) explaining what was accomplished. 
-The message should be specific to what actually happened and should change based on the content of the result.
+    The message should be specific to what actually happened and should change based on the content of the result.
 
 Task: {task}
 Input: {text[:200]}...
@@ -125,6 +150,34 @@ Message:"""
     
     return {
         "message": message,
-        "result": result_text
+        "result": result_text,
+        "task": task,
     }
+
+
+# Wrapper function that structures input for Opik tracking
+def _execute_task(task: str, text: str) -> Dict[str, str]:
+    """Wrapper function that structures input for Opik tracking.
+    
+    Args:
+        task: One of ["summarize", "websearch", "translate"]
+        text: The text input
+    
+    Returns:
+        Dictionary with "message", "result", and "task" keys
+    """
+    # Execute the internal task function
+    # Opik will capture task and text as separate parameters, resulting in flat structure
+    return _execute_task_internal(task, text)
+
+# Apply Opik tracking decorator to the wrapper function
+# This will capture both input (task, text) and output (result dict)
+if opik:
+    _execute_task = opik.track(
+        _execute_task,
+        type='llm',
+        capture_input=True,  # Captures task and text arguments
+        capture_output=True,  # Captures the return dict
+        flush=True  # Flush immediately to ensure data is sent
+    )
 

@@ -6,6 +6,17 @@ from typing import Optional
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Initialize Opik for logging
+# Opik will automatically read configuration from ~/.opik.config
+try:
+    import opik
+except ImportError:
+    opik = None
 
 
 class SummarizeToolInput(BaseModel):
